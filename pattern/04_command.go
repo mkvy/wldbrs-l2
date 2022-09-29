@@ -1,4 +1,4 @@
-package pattern
+package main
 
 /*
 	Реализовать паттерн «комманда».
