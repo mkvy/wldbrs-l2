@@ -21,6 +21,7 @@ import (
 const ntpServer = "ntp5.stratum2.ru"
 
 func GetTime() (time.Time, error) {
+	//получаем время через метод Time библиотеки ntp
 	return ntp.Time(ntpServer)
 }
 
