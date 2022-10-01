@@ -1,5 +1,12 @@
 package main
 
+import (
+	"fmt"
+	"github.com/beevik/ntp"
+	"os"
+	"time"
+)
+
 /*
 === Базовая задача ===
 
@@ -11,7 +18,17 @@ package main
 Программа должна корректно обрабатывать ошибки библиотеки: распечатывать их в STDERR и возвращать ненулевой код выхода в OS.
 Программа должна проходить проверки go vet и golint.
 */
+const ntpServer = "ntp5.stratum2.ru"
+
+func GetTime() (time.Time, error) {
+	return ntp.Time(ntpServer)
+}
 
 func main() {
-
+	time, err := GetTime()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "An error has occured %s", err)
+		os.Exit(1)
+	}
+	fmt.Fprintf(os.Stdout, "Current time is %v\n", time.Format("15.04.05"))
 }
