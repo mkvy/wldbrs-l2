@@ -53,13 +53,13 @@ func quickSort(arr []string, flags flagsCmd) []string {
 			return res
 		}
 	}
-	if flags.k < 0 && !flags.n && !flags.M && !flags.h {
+	if flags.k <= 0 && !flags.n && !flags.M && !flags.h {
 		quickSortAlg(res, 0, len(res)-1, flags, &CompareByDefault{})
 	}
 	if flags.k > 0 {
 		quickSortAlg(res, 0, len(res)-1, flags, &CompareByColumn{})
 	}
-	if flags.n && flags.k < 0 {
+	if flags.n && flags.k <= 0 {
 		quickSortAlg(res, 0, len(res)-1, flags, &CompareByInt{})
 	}
 	if flags.M {
@@ -211,6 +211,11 @@ func (c *CompareBySuffix) compare(a, b string, f flagsCmd) int {
 		a = strings.TrimSpace(a)
 		b = strings.TrimSpace(b)
 	}
+	if f.k > 0 {
+		a = strings.Split(a, " ")[f.k-1]
+		b = strings.Split(b, " ")[f.k-1]
+	}
+
 	if _, ok := Numsufx[string(a[len(a)-1])]; !ok {
 		return -1
 	}
@@ -224,12 +229,11 @@ func (c *CompareBySuffix) compare(a, b string, f flagsCmd) int {
 		fmt.Fprintf(os.Stderr, "error converting to float\n")
 		return -1
 	}
-	v2fl, err := strconv.ParseFloat(a[:len(a)-1], 64)
+	v2fl, err := strconv.ParseFloat(b[:len(b)-1], 64)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error converting to float\n")
 		return 1
 	}
-
 	v1fl = math.Pow(10, v1) * v1fl
 	v2fl = math.Pow(10, v2) * v2fl
 	if v1fl > v2fl {
