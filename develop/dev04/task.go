@@ -1,5 +1,12 @@
 package main
 
+import (
+	"fmt"
+	"math/rand"
+	"strings"
+	"time"
+)
+
 /*
 === Поиск анаграмм по словарю ===
 
@@ -19,6 +26,107 @@ package main
 Программа должна проходить все тесты. Код должен проходить проверки go vet и golint.
 */
 
-func main() {
+func isAnagram(word1, word2 string) bool {
+	if len(word2) != len(word1) {
+		return false
+	}
+	//количество вхождений в строку
+	chars := make(map[rune]int)
+	for _, v := range word1 {
+		chars[v]++
+	}
+	for _, v := range word2 {
+		//если не найдена нужная буква, false
+		if _, ok := chars[v]; !ok {
+			return false
+		}
+		//когда кончились буквы, удаляем из множества
+		if chars[v]-1 == 0 {
+			delete(chars, v)
+		}
+		chars[v]--
+	}
+	return true
+}
+func quickSort(arr []string) []string {
+	res := make([]string, len(arr))
+	copy(res, arr)
+	quickSortAlg(res, 0, len(res)-1)
+	return res
+}
 
+func quickSortAlg(arr []string, lowIndex, highIndex int) {
+	if lowIndex >= highIndex {
+		return
+	}
+	s2 := rand.NewSource(time.Now().Unix())
+	r2 := rand.New(s2)
+	pivotIndex := r2.Intn(highIndex-lowIndex) + lowIndex
+	pivot := arr[pivotIndex]
+	arr[pivotIndex], arr[highIndex] = arr[highIndex], arr[pivotIndex]
+
+	leftP := lowIndex
+	rightP := highIndex - 1
+	for leftP < rightP {
+		for arr[leftP] <= pivot && leftP < rightP {
+			leftP++
+		}
+		for arr[rightP] >= pivot && leftP < rightP {
+			rightP--
+		}
+		//свап
+		arr[leftP], arr[rightP] = arr[rightP], arr[leftP]
+	}
+
+	if arr[leftP] > arr[highIndex] {
+		arr[leftP], arr[highIndex] = arr[highIndex], arr[leftP]
+	} else {
+		leftP = highIndex
+	}
+
+	quickSortAlg(arr, lowIndex, leftP-1)
+	quickSortAlg(arr, leftP+1, highIndex)
+
+}
+
+func uniqueStrs(s []string) []string {
+	strs := make(map[string]int)
+	sOut := make([]string, 0, cap(s))
+	for _, v := range s {
+		if _, ok := strs[v]; !ok {
+			sOut = append(sOut, v)
+			strs[v]++
+		}
+	}
+	return sOut
+}
+
+func GetAnagramSet(strs []string) map[string][]string {
+	vocab := make(map[string][]string)
+	for _, v := range strs {
+		notFound := true
+		for k, _ := range vocab {
+			if isAnagram(strings.ToLower(k), strings.ToLower(v)) {
+				vocab[k] = append(vocab[k], strings.ToLower(v))
+				notFound = false
+			}
+		}
+		if notFound {
+			vocab[strings.ToLower(v)] = append(vocab[strings.ToLower(v)], strings.ToLower(v))
+		}
+	}
+	for k, v := range vocab {
+		if len(v) <= 1 {
+			delete(vocab, k)
+		}
+		vocab[k] = uniqueStrs(v)
+		vocab[k] = quickSort(vocab[k])
+	}
+	return vocab
+}
+
+func main() {
+	strs := []string{"Столик", "СЛИТОК", "пятак", "ятпка", "СТОлик", "тяпка", "тяпка", "пятак"}
+	out := GetAnagramSet(strs)
+	fmt.Println(out)
 }

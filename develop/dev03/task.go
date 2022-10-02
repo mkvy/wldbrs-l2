@@ -157,7 +157,6 @@ func quickSortAlg(arr []string, lowIndex, highIndex int, fl flagsCmd, cmp Compar
 	leftP := lowIndex
 	rightP := highIndex - 1
 	for leftP < rightP {
-		//	fmt.Println("arr[leftp] = ", cmp.)
 		for cmp.compare(arr[leftP], pivot, fl) <= 0 && leftP < rightP {
 			leftP++
 		}
