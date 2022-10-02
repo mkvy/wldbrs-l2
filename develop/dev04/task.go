@@ -26,6 +26,7 @@ import (
 Программа должна проходить все тесты. Код должен проходить проверки go vet и golint.
 */
 
+//проверка: является ли word2 анаграмой word1
 func isAnagram(word1, word2 string) bool {
 	if len(word2) != len(word1) {
 		return false
@@ -48,6 +49,8 @@ func isAnagram(word1, word2 string) bool {
 	}
 	return true
 }
+
+//быстрая сортировка, для сортировки слайса на выходе
 func quickSort(arr []string) []string {
 	res := make([]string, len(arr))
 	copy(res, arr)
@@ -89,6 +92,7 @@ func quickSortAlg(arr []string, lowIndex, highIndex int) {
 
 }
 
+//возвращает слайс состоящий только из уникальных строк
 func uniqueStrs(s []string) []string {
 	strs := make(map[string]int)
 	sOut := make([]string, 0, cap(s))
@@ -102,23 +106,28 @@ func uniqueStrs(s []string) []string {
 }
 
 func GetAnagramSet(strs []string) map[string][]string {
+	//множество
 	vocab := make(map[string][]string)
 	for _, v := range strs {
 		notFound := true
 		for k, _ := range vocab {
+			//если для анаграмы ключ уже существует, добавляем в значение-слайс мапы
 			if isAnagram(strings.ToLower(k), strings.ToLower(v)) {
 				vocab[k] = append(vocab[k], strings.ToLower(v))
 				notFound = false
 			}
 		}
+		//если впервые, добавляем в мапу
 		if notFound {
 			vocab[strings.ToLower(v)] = append(vocab[strings.ToLower(v)], strings.ToLower(v))
 		}
 	}
 	for k, v := range vocab {
+		//удаляем одноэлементные
 		if len(v) <= 1 {
 			delete(vocab, k)
 		}
+		//убираем дубли и сортируем
 		vocab[k] = uniqueStrs(v)
 		vocab[k] = quickSort(vocab[k])
 	}
