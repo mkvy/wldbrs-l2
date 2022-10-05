@@ -422,6 +422,7 @@ func readFile() []string {
 	return strs
 }
 
+// пример запуска go run . -k 2
 func main() {
 	flags := flagsInit()
 	strs := readFile()

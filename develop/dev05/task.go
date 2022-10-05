@@ -29,6 +29,8 @@ import (
 Программа должна проходить все тесты. Код должен проходить проверки go vet и golint.
 */
 
+//вспомогательная структура, содержит индекс строки , строку
+//и поле isMatch - совпала ли с паттерном или нет
 type stringLine struct {
 	s       string
 	isMatch bool
@@ -49,10 +51,14 @@ type Flags struct {
 }
 
 func markMatch(s *[]stringLine, f Flags) {
+	//если требуется точное совпадение
 	if f.fixed {
 		for i, _ := range *s {
+			//если нет требования игнорировать регистр
 			if !f.ignorecase {
+				//если необходимо исключать, возвращаем отрицание
 				if !f.invert {
+					//проверяем на наличие подстроки
 					(*s)[i].isMatch = strings.Contains((*s)[i].s, f.rExp)
 				} else {
 					(*s)[i].isMatch = !strings.Contains((*s)[i].s, f.rExp)
@@ -69,6 +75,7 @@ func markMatch(s *[]stringLine, f Flags) {
 		for i, _ := range *s {
 			var matched bool
 			var err error
+			//проверяем на совпадение по паттерну
 			if !f.ignorecase {
 				matched, err = regexp.Match(f.rExp, []byte((*s)[i].s))
 			} else {
@@ -78,16 +85,20 @@ func markMatch(s *[]stringLine, f Flags) {
 				fmt.Fprintf(os.Stderr, "error compiling regex\n")
 				(*s)[i].isMatch = false
 			}
+			//если требуется искключение
 			if f.invert {
 				matched = !matched
 			}
+			//у каждой строки метка, подходит под параметр или нет
 			(*s)[i].isMatch = matched
 		}
 	}
 }
 
+//печать уже отфильтрованных значений
 func printFiltered(s *[]stringLine, f Flags) {
 	if f.after == 0 && f.before == 0 && f.context == 0 {
+		//если не требуется буфер(флаги a, b, C)
 		r := &resultGrepFilter{}
 		res := r.resFilter(s, f)
 		if !f.count {
@@ -98,6 +109,7 @@ func printFiltered(s *[]stringLine, f Flags) {
 			fmt.Println(len(res))
 		}
 	} else {
+		//если был флаг a,b или C
 		r := &resultGrepFilterBuf{}
 		res := r.resFilter(s, f)
 		for _, v := range res {
@@ -113,9 +125,11 @@ type GetGrepRes interface {
 type resultGrepFilter struct{}
 
 func (r *resultGrepFilter) resFilter(s *[]stringLine, f Flags) []string {
+	//добавляем в выходной слайс все строки, которые имеют метку
 	out := make([]string, 0, cap(*s))
 	for _, v := range *s {
 		if v.isMatch {
+			//если было условие пронумеровать
 			if f.linenum {
 				out = append(out, strconv.Itoa(v.index)+": "+v.s)
 			} else {
@@ -130,6 +144,7 @@ type resultGrepFilterBuf struct{}
 
 func (r *resultGrepFilterBuf) resFilter(s *[]stringLine, f Flags) []string {
 	var cBefore, cAfter int
+	//если был флаг C, то a=b
 	if f.context > 0 {
 		cBefore = f.context
 		cAfter = f.context
@@ -137,20 +152,25 @@ func (r *resultGrepFilterBuf) resFilter(s *[]stringLine, f Flags) []string {
 		cBefore = f.before
 		cAfter = f.after
 	}
+	//буфер строк до/после
 	cBeforeBuf := make([]string, 0, cBefore)
 	cAfterBuf := make([]string, 0, cAfter)
+	//выходной
 	out := make([]string, 0, cap(*s))
 	befIndex := 0
 	afIndex := 0
 	needAfter := false
 	for _, v := range *s {
+		//если нашли value и требуется добавить строки after
 		if needAfter {
+			//добавляем в буфер after
 			if f.linenum {
 				cAfterBuf = append(cAfterBuf, strconv.Itoa(v.index)+": "+v.s)
 			} else {
 				cAfterBuf = append(cAfterBuf, v.s)
 			}
 			afIndex++
+			//когда добавили все строки по параметру after, добавляем их в выходной массив, чистим буфер, обнуляем индекс
 			if afIndex == cAfter {
 				afIndex = 0
 				out = append(out, cAfterBuf...)
@@ -158,6 +178,7 @@ func (r *resultGrepFilterBuf) resFilter(s *[]stringLine, f Flags) []string {
 				needAfter = false
 			}
 		}
+		//заполняем буфер before
 		if !v.isMatch && !needAfter && befIndex < cBefore {
 			if f.linenum {
 				cBeforeBuf = append(cBeforeBuf, strconv.Itoa(v.index)+": "+v.s)
@@ -169,17 +190,22 @@ func (r *resultGrepFilterBuf) resFilter(s *[]stringLine, f Flags) []string {
 				befIndex = 0
 			}
 		}
+		//если нашли совпадение и не было требования печатать after
 		if v.isMatch && !needAfter {
+			//если был буфер before, добавляем в выходной слайс
 			if len(cBeforeBuf) > 0 {
 				out = append(out, cBeforeBuf...)
 			}
+			//добавляем строку которая совпала
 			if f.linenum {
 				out = append(out, strconv.Itoa(v.index)+": "+v.s)
 			} else {
 				out = append(out, v.s)
 			}
+			//обнуляем буфер before
 			befIndex = 0
 			cBeforeBuf = make([]string, 0, cBefore)
+			//если необходимо еще и печатать строки after
 			if cAfter > 0 {
 				needAfter = true
 			}
@@ -224,12 +250,16 @@ func readFileIntoStruct(f Flags) []stringLine {
 }
 
 func StartSearching(f Flags) {
+	//читаем строки из файла в структуру
 	strs := readFileIntoStruct(f)
+	//отмечаем, попадает ли строка под заданный паттерн или нет
 	markMatch(&strs, f)
 	printFiltered(&strs, f)
 }
 
 func main() {
+	//пример запуска
+	//go run . -A 2 -B 2 'lang.*' -n
 	flags := flagsInit()
 	StartSearching(*flags)
 }
