@@ -61,7 +61,7 @@ func cutStrings(strs []string, f Flags) []string {
 	return outStr
 }
 
-//парсим параметры fields
+// парсим параметры fields
 func parseFlagString(s string) []int {
 	strs := strings.Split(s, ",")
 	ints := make([]int, 0, len(strs))
@@ -85,7 +85,7 @@ func flagsInit() *Flags {
 	return f
 }
 
-//читаем строки с stdin до сигнала eof и возвращаем слайс из считанных строк
+// читаем строки с stdin до сигнала eof и возвращаем слайс из считанных строк
 func readStrings() []string {
 	reader := bufio.NewReader(os.Stdin)
 	strs := make([]string, 0)
@@ -103,9 +103,9 @@ func readStrings() []string {
 	return strs
 }
 
-func printStrings(s *[]string) {
+func printStrings(s []string) {
 	fmt.Println("--------------")
-	for _, v := range *s {
+	for _, v := range s {
 		fmt.Println(v)
 	}
 }
@@ -117,10 +117,10 @@ func StartCut() {
 	strsToCut := readStrings()
 	//обрезаем, печатаем
 	out := cutStrings(strsToCut, flags)
-	printStrings(&out)
+	printStrings(out)
 }
 
-//пример запуска go run . -f 1,2 -d " " -s
+// пример запуска go run . -f 1,2 -d " " -s
 func main() {
 	StartCut()
 }
