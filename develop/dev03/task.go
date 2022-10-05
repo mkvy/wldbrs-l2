@@ -422,6 +422,19 @@ func readFile() []string {
 	return strs
 }
 
+func writeFile(s *[]string) {
+	f, err := os.Create("./outfile.txt")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer f.Close()
+	w := bufio.NewWriter(f)
+	for _, v := range *s {
+		w.WriteString(v + "\n")
+	}
+	w.Flush()
+}
+
 // пример запуска go run . -k 2
 func main() {
 	flags := flagsInit()
@@ -434,4 +447,5 @@ func main() {
 	for _, v := range sorted {
 		fmt.Println(v)
 	}
+	writeFile(&sorted)
 }
