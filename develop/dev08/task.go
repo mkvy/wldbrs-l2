@@ -78,6 +78,7 @@ func execCmd(args []string) {
 func parseStr(str string) {
 	arg := strings.Split(str, " ")
 	cmd := strings.ToLower(arg[0])
+	//вызываем функцию в зависимости от команды
 	switch cmd {
 	case "echo":
 		echo(str)
@@ -96,6 +97,7 @@ func parseStr(str string) {
 
 func StartShell() {
 	scan := bufio.NewScanner(os.Stdin)
+	//в цикле считываем команды
 	for {
 		fmt.Fprint(os.Stdout, ">")
 		scan.Scan()
