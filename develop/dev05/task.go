@@ -29,8 +29,31 @@ import (
 Программа должна проходить все тесты. Код должен проходить проверки go vet и golint.
 */
 
-//вспомогательная структура, содержит индекс строки , строку
-//и поле isMatch - совпала ли с паттерном или нет
+type Queue struct {
+	buf  []string
+	size int
+}
+
+func InitQueue(size int) *Queue {
+	buffer := make([]string, 0, size)
+	return &Queue{
+		buf:  buffer,
+		size: 0,
+	}
+}
+
+func (q *Queue) Push(elem string) {
+	if q.size >= cap(q.buf) {
+		q.buf = q.buf[1:]
+		q.buf = append(q.buf, elem)
+		return
+	}
+	q.buf = append(q.buf, elem)
+	q.size++
+}
+
+// вспомогательная структура, содержит индекс строки , строку
+// и поле isMatch - совпала ли с паттерном или нет
 type stringLine struct {
 	s       string
 	isMatch bool
@@ -95,7 +118,7 @@ func markMatch(s *[]stringLine, f Flags) {
 	}
 }
 
-//печать уже отфильтрованных значений
+// печать уже отфильтрованных значений
 func printFiltered(s *[]stringLine, f Flags) {
 	if f.after == 0 && f.before == 0 && f.context == 0 {
 		//если не требуется буфер(флаги a, b, C)
@@ -153,11 +176,11 @@ func (r *resultGrepFilterBuf) resFilter(s *[]stringLine, f Flags) []string {
 		cAfter = f.after
 	}
 	//буфер строк до/после
-	cBeforeBuf := make([]string, 0, cBefore)
+	cBeforeBuf := InitQueue(cBefore)
 	cAfterBuf := make([]string, 0, cAfter)
 	//выходной
 	out := make([]string, 0, cap(*s))
-	befIndex := 0
+	//befIndex := 0
 	afIndex := 0
 	needAfter := false
 	for _, v := range *s {
@@ -175,26 +198,26 @@ func (r *resultGrepFilterBuf) resFilter(s *[]stringLine, f Flags) []string {
 				afIndex = 0
 				out = append(out, cAfterBuf...)
 				cAfterBuf = make([]string, 0, cAfter)
-				needAfter = false
+				needAfter = v.isMatch
+				if !needAfter {
+					continue
+				}
 			}
 		}
 		//заполняем буфер before
-		if !v.isMatch && !needAfter && befIndex < cBefore {
+		if !v.isMatch && !needAfter {
+			//используем очередь
 			if f.linenum {
-				cBeforeBuf = append(cBeforeBuf, strconv.Itoa(v.index)+": "+v.s)
+				cBeforeBuf.Push(strconv.Itoa(v.index) + ": " + v.s)
 			} else {
-				cBeforeBuf = append(cBeforeBuf, v.s)
-			}
-			befIndex++
-			if befIndex == cBefore {
-				befIndex = 0
+				cBeforeBuf.Push(v.s)
 			}
 		}
 		//если нашли совпадение и не было требования печатать after
 		if v.isMatch && !needAfter {
 			//если был буфер before, добавляем в выходной слайс
-			if len(cBeforeBuf) > 0 {
-				out = append(out, cBeforeBuf...)
+			if len(cBeforeBuf.buf) > 0 {
+				out = append(out, cBeforeBuf.buf...)
 			}
 			//добавляем строку которая совпала
 			if f.linenum {
@@ -203,9 +226,7 @@ func (r *resultGrepFilterBuf) resFilter(s *[]stringLine, f Flags) []string {
 				out = append(out, v.s)
 			}
 			//обнуляем буфер before
-			befIndex = 0
-			cBeforeBuf = make([]string, 0, cBefore)
-			//если необходимо еще и печатать строки after
+			cBeforeBuf = InitQueue(cBefore)
 			if cAfter > 0 {
 				needAfter = true
 			}
@@ -259,7 +280,7 @@ func StartSearching(f Flags) {
 
 func main() {
 	//пример запуска
-	//go run . -A 2 -B 2 'lang.*' -n
+	//go run . -A 2 -B 2 -r 'lang.*' -n
 	flags := flagsInit()
 	StartSearching(*flags)
 }
