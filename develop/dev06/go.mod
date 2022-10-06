@@ -1,4 +1,4 @@
-module github.com/mkvy/develop/dev06
+module github.com/mkvy/wldbrs-l2/develop/dev06
 
 go 1.19
 
