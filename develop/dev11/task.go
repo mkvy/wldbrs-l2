@@ -1,5 +1,13 @@
 package main
 
+import (
+	"flag"
+	"log"
+	"os"
+	"os/signal"
+	"time"
+)
+
 /*
 === HTTP server ===
 
@@ -22,6 +30,23 @@ package main
 	4. Код должен проходить проверки go vet и golint.
 */
 
-func main() {
+type Event struct {
+	ID        uint64    `json:"id"`
+	UserID    uint64    `json:"user_id"`
+	Date      time.Time `json:"date"`
+	EventData string    `json:"message"`
+}
 
+func main() {
+	port := flag.String("p", "8181", "port")
+	flag.Parse()
+	storage := InitEventStorage()
+	controller := InitController(storage)
+	server := InitServerAPI(*port, *controller)
+	go server.Run()
+	log.Println("Server is running")
+	sigTerm := make(chan os.Signal, 1)
+	signal.Notify(sigTerm, os.Interrupt, os.Kill)
+	<-sigTerm
+	server.Close()
 }
