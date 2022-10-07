@@ -13,6 +13,7 @@ type ServerAPI struct {
 
 func InitServerAPI(port string, ec EventController) *ServerAPI {
 	router := http.NewServeMux()
+	//прописываем маршруты, в обработчик передаем миддлвару
 	router.Handle("/create_event", LoggerMiddleware(ec.CreateEvent))
 	router.Handle("/update_event", LoggerMiddleware(ec.UpdateEvent))
 	router.Handle("/delete_event", LoggerMiddleware(ec.DeleteEvent))

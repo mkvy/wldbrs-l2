@@ -20,7 +20,7 @@ type EventService interface {
 	GetForMonth(uid uint64, t time.Time) []Event
 }
 
-// данные будем хранить в памяти, без persist
+// данные будем хранить в памяти в мапе, без persist
 type EventServiceImpl struct {
 	m         *sync.RWMutex
 	repo      map[uint64]Event
@@ -86,7 +86,7 @@ func (es *EventServiceImpl) GetForDay(uid uint64, t time.Time) []Event {
 	out := make([]Event, 0)
 	for _, e := range es.repo {
 		if e.UserID == uid {
-			if t.AddDate(0, 0, 1).Sub(e.Date) >= 0 {
+			if e.Date == t {
 				out = append(out, e)
 			}
 		}
@@ -100,7 +100,7 @@ func (es *EventServiceImpl) GetForWeek(uid uint64, t time.Time) []Event {
 	out := make([]Event, 0)
 	for _, e := range es.repo {
 		if e.UserID == uid {
-			if t.AddDate(0, 0, 7).Sub(e.Date) >= 0 {
+			if e.Date.After(t) && e.Date.Before(t.AddDate(0, 0, 7)) {
 				out = append(out, e)
 			}
 		}
@@ -114,7 +114,7 @@ func (es *EventServiceImpl) GetForMonth(uid uint64, t time.Time) []Event {
 	out := make([]Event, 0)
 	for _, e := range es.repo {
 		if e.UserID == uid {
-			if t.AddDate(0, 1, 0).Sub(e.Date) >= 0 {
+			if e.Date.After(t) && e.Date.Before(t.AddDate(0, 1, 0)) {
 				out = append(out, e)
 			}
 		}

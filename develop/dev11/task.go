@@ -30,6 +30,7 @@ import (
 	4. Код должен проходить проверки go vet и golint.
 */
 
+// структура сущности
 type Event struct {
 	ID        uint64    `json:"id"`
 	UserID    uint64    `json:"user_id"`
@@ -38,13 +39,17 @@ type Event struct {
 }
 
 func main() {
+	//считываем порт параметром если необходимо
 	port := flag.String("p", "8181", "port")
 	flag.Parse()
+	//получаем объекты сервиса и контроллера
 	storage := InitEventStorage()
 	controller := InitController(storage)
+	//запускаем сервер
 	server := InitServerAPI(*port, *controller)
 	go server.Run()
 	log.Println("Server is running")
+	//graceful shutdown на прерывание
 	sigTerm := make(chan os.Signal, 1)
 	signal.Notify(sigTerm, os.Interrupt, os.Kill)
 	<-sigTerm

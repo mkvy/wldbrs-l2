@@ -10,6 +10,7 @@ import (
 	"time"
 )
 
+// формат даты
 const layout = "2006-01-02"
 
 // реализуем контроллер
@@ -23,9 +24,13 @@ func InitController(s EventService) *EventController {
 	}
 }
 
-//Методы API: POST /create_event POST /update_event POST /delete_event GET /events_for_day GET /events_for_week GET /events_for_month
+// Методы API: POST /create_event POST /update_event POST /delete_event GET /events_for_day GET /events_for_week GET /events_for_month
 
-// POST /create_event
+// CreateEvent POST /create_event
+// поля передаются в виде application/x-www-form-urlencoded:
+// user_id uint обязательное
+// date формата 2006-01-02 обязательное
+// message
 func (ec *EventController) CreateEvent(w http.ResponseWriter, r *http.Request) {
 	//проверяем, пришел ли post method
 	logHeader := "createEvent"
@@ -74,8 +79,10 @@ func (ec *EventController) CreateEvent(w http.ResponseWriter, r *http.Request) {
 	log.Printf("%s: created event %+v", logHeader, event)
 }
 
-//POST на update_event
-
+// UpdateEvent POST на update_event
+// поля передаются в виде application/x-www-form-urlencoded:
+// ID uint обязательное
+// user_id uint, date, message необязательные
 func (ec *EventController) UpdateEvent(w http.ResponseWriter, r *http.Request) {
 	//проверяем, пришел ли post method
 	logHeader := "updateEvent"
@@ -145,7 +152,9 @@ func (ec *EventController) UpdateEvent(w http.ResponseWriter, r *http.Request) {
 	log.Printf("%s: updated event %+v", logHeader, event)
 }
 
-//DELETE на delete_event
+// DeleteEvent DELETE на delete_event
+// поля в виде www-form-urlencoded
+// ID - обязательное
 
 func (ec *EventController) DeleteEvent(w http.ResponseWriter, r *http.Request) {
 	//проверяем, пришел ли post method
@@ -179,7 +188,9 @@ func (ec *EventController) DeleteEvent(w http.ResponseWriter, r *http.Request) {
 	log.Printf("%s: deleted event %+v", logHeader, id)
 }
 
-//GET /events_for_day
+// GET /events_for_day
+// поля в форме www-form-urlencoded
+// date ,  user_id (тип uint) обязательное
 
 func (ec *EventController) GetEventsForDay(w http.ResponseWriter, r *http.Request) {
 	logHeader := "getEventsForDay"
@@ -214,6 +225,7 @@ func (ec *EventController) GetEventsForDay(w http.ResponseWriter, r *http.Reques
 }
 
 //GET events_for_week
+// аналогично GET /events_for_day
 
 func (ec *EventController) GetEventsForWeek(w http.ResponseWriter, r *http.Request) {
 	logHeader := "getEventsForWeek"
@@ -247,7 +259,8 @@ func (ec *EventController) GetEventsForWeek(w http.ResponseWriter, r *http.Reque
 	log.Printf("%s: get event for user %d", logHeader, userID)
 }
 
-//GET events_for_month
+// GET events_for_month
+// аналогично GET /events_for_day
 
 func (ec *EventController) GetEventsForMonth(w http.ResponseWriter, r *http.Request) {
 	logHeader := "getEventsForMonth"
@@ -282,16 +295,19 @@ func (ec *EventController) GetEventsForMonth(w http.ResponseWriter, r *http.Requ
 }
 
 // вспомогательные методы writer-ы
+// пишут ответ
+
+// пишем результат из одной строки
 func returnResult(w http.ResponseWriter, result string, status int) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	fmt.Fprintf(w, `{"result": %s}`, result)
 }
 
+// возвращаем ошибку
 func returnError(w http.ResponseWriter, logHeader, err string, status int) {
 	log.Printf("%s: %s", logHeader, err)
 	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("X-Content-Type-Options", "nosniff")
 	w.WriteHeader(status)
 	if err == "" {
 		fmt.Fprintf(w, `{"error": "%s"}`, http.StatusText(status))
@@ -300,6 +316,7 @@ func returnError(w http.ResponseWriter, logHeader, err string, status int) {
 	fmt.Fprintf(w, `{"error": "%s: %s"}`, http.StatusText(status), err)
 }
 
+// пишем результат из слайса event, сериализуем в json
 func returnEvents(w http.ResponseWriter, logHeader string, events []Event) {
 	type result struct {
 		Result []Event `json:"result"`

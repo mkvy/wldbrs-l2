@@ -7,6 +7,7 @@ import (
 	"strings"
 )
 
+// миддлвейр логгер, пишет данные поступившие из запроса
 func LoggerMiddleware(next http.HandlerFunc) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer next.ServeHTTP(w, r)
